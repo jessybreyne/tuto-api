@@ -6,6 +6,8 @@ use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\PostRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass=PostRepository::class)
@@ -13,6 +15,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiResource(
     normalizationContext: ['groups' => ['read:collection']],
     denormalizationContext: ['groups' => ['write:Post']],
+    collectionOperations: [
+        'get',
+        'post'
+    ],
     itemOperations: [
         'put',
         'delete',
@@ -34,7 +40,10 @@ class Post
     /**
      * @ORM\Column(type="string", length=255)
      */
-    #[Groups(['read:collection', 'write:Post'])]
+    #[
+        Groups(['read:collection', 'write:Post']),
+        Length(min: 5, groups: ['create:Post'])
+    ]
     private $title;
 
     /**
@@ -61,9 +70,12 @@ class Post
     private $updatedAt;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Category::class, inversedBy="posts")
+     * @ORM\ManyToOne(targetEntity=Category::class, inversedBy="posts", cascade={"persist"})
      */
-    #[Groups(['read:item', 'write:Post'])]
+    #[
+        Groups(['read:item', 'write:Post']),
+        Assert\Valid()
+    ]
     private $category;
 
     public function __construct()
